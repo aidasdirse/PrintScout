@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PrintScout — 3D Market Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #F7F4EF;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE8;
+  --border: #E2DDD6;
+  --text: #1C1915;
+  --text-muted: #8A8278;
+  --text-light: #B8B2A8;
+  --accent: #D95F1A;
+  --accent-light: #FEF0E7;
+  --green: #1A7A4A;
+  --green-light: #E8F5EE;
+  --yellow: #B07A00;
+  --yellow-light: #FFF8E0;
+  --red: #C0392B;
+  --red-light: #FDECEA;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Header ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-mark {
+  width: 30px;
+  height: 30px;
+  background: var(--accent);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-light);
+  display: inline-block;
+}
+.status-dot.running { background: var(--accent); animation: blink 1s ease-in-out infinite; }
+.status-dot.idle { background: var(--green); }
+.status-dot.error { background: var(--red); }
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.status-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.btn-trigger {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.btn-trigger:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-trigger:active { transform: translateY(0); }
+.btn-trigger:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ── Layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  min-height: calc(100vh - 60px);
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  height: calc(100vh - 60px);
+  position: sticky;
+  top: 60px;
+}
+
+.sidebar-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* Opportunity cards in sidebar */
+.opp-card {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+}
+.opp-card:hover { background: var(--bg); }
+.opp-card.active { background: var(--accent-light); border-color: rgba(217,95,26,0.2); }
+
+.opp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.opp-keyword {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  text-transform: capitalize;
+  flex: 1;
+  margin-right: 8px;
+  line-height: 1.3;
+}
+
+.score-badge {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  min-width: 36px;
+  text-align: right;
+}
+
+.opp-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mini-pill {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 100px;
+  font-weight: 500;
+}
+.pill-green { background: var(--green-light); color: var(--green); }
+.pill-yellow { background: var(--yellow-light); color: var(--yellow); }
+.pill-red { background: var(--red-light); color: var(--red); }
+.pill-orange { background: var(--accent-light); color: var(--accent); }
+.pill-neutral { background: var(--surface2); color: var(--text-muted); }
+
+.trend-chip {
+  font-size: 12px;
+  font-weight: 500;
+}
+.trend-up { color: var(--green); }
+.trend-down { color: var(--red); }
+.trend-flat { color: var(--yellow); }
+
+/* ── Main content ── */
+.main-content {
+  padding: 28px 32px;
+  overflow-y: auto;
+}
+
+/* Empty / loading states */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+.empty-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.empty-sub { font-size: 14px; color: var(--text-muted); max-width: 320px; }
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Detail view ── */
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.detail-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  color: var(--text);
+  text-transform: capitalize;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.detail-trend {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.detail-price-block {
+  text-align: right;
+}
+.price-range {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 26px;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.price-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Score grid */
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.score-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.score-card-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.score-card-value {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.score-card-denom {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.score-card-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Data sources row */
+.data-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.data-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.data-tile-source {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+.data-tile-value {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.data-tile-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Info cards */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+
+.info-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-card-icon { font-size: 14px; }
+
+.bullet-list { list-style: none; }
+.bullet-list li {
+  font-size: 13px;
+  color: var(--text);
+  padding: 6px 0 6px 14px;
+  border-left: 2px solid var(--border);
+  margin-bottom: 6px;
+  line-height: 1.5;
+  position: relative;
+}
+
+/* Platform bars */
+.platform-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.bar-label { width: 150px; font-size: 13px; color: var(--text); flex-shrink: 0; }
+.bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: width 0.6s ease;
+}
+.bar-num { width: 32px; font-size: 12px; color: var(--text-muted); text-align: right; }
+
+/* Search terms */
+.term-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.term-chip {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Related niches */
+.related-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.related-chip {
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid rgba(217,95,26,0.2);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.related-chip:hover { background: rgba(217,95,26,0.15); transform: translateY(-1px); }
+
+/* Pipeline log */
+.pipeline-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+
+/* ── Utilities ── */
+.section-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+
+.text-green { color: var(--green); }
+.text-yellow { color: var(--yellow); }
+.text-red { color: var(--red); }
+.text-muted { color: var(--text-muted); }
+.font-syne { font-family: 'Syne', sans-serif; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; }
+  .score-grid { grid-template-columns: 1fr 1fr; }
+  .data-row { grid-template-columns: 1fr 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Animations ── */
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark"></div>
+    <div>
+      <span class="logo-text">PrintScout</span>
+      <span class="logo-sub">3D Market Intelligence</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="status-dot" id="status-dot"></span>
+    <span class="status-text" id="status-text">Loading...</span>
+    <button class="btn-trigger" id="trigger-btn" onclick="triggerPipeline()">▶ Run Now</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Sidebar: opportunity list -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Top Opportunities</div>
+      <div id="opp-list">
+        <div class="empty-state" style="min-height:200px;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main: detail view -->
+  <main class="main-content" id="main-content">
+    <div class="empty-state" id="empty-placeholder">
+      <div class="empty-icon">⬡</div>
+      <div class="empty-title">Waiting for pipeline data</div>
+      <div class="empty-sub">Click "Run Now" to kick off the first scan, or wait for the scheduled run every 6 hours.</div>
+    </div>
+  </main>
+</div>
+
+<script>
+const BASE = window.location.origin;
+let opportunities = [];
+let activeKeyword = null;
+let statusInterval = null;
+
+// ── Utilities ──────────────────────────────────────────────────────────────────
+
+function scoreColor(n) {
+  if (n == null) return 'var(--text-muted)';
+  return n >= 70 ? 'var(--green)' : n >= 45 ? 'var(--yellow)' : 'var(--red)';
+}
+function scorePillClass(n) {
+  return n >= 70 ? 'pill-green' : n >= 45 ? 'pill-yellow' : 'pill-red';
+}
+function trendSymbol(t) {
+  return t === 'up' ? '↑' : t === 'down' ? '↓' : '→';
+}
+function trendClass(t) {
+  return t === 'up' ? 'trend-up' : t === 'down' ? 'trend-down' : 'trend-flat';
+}
+function fmt(n, prefix='$') {
+  if (n == null) return '—';
+  return prefix + Number(n).toLocaleString();
+}
+function capFirst(s) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ── Status polling ─────────────────────────────────────────────────────────────
+
+async function pollStatus() {
+  try {
+    const r = await fetch(`${BASE}/api/status`);
+    const s = await r.json();
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-text');
+    const btn = document.getElementById('trigger-btn');
+    dot.className = 'status-dot ' + (s.state || 'idle');
+    txt.textContent = s.message || '';
+    btn.disabled = s.state === 'running';
+    btn.textContent = s.state === 'running' ? '⏳ Running...' : '▶ Run Now';
+    if (s.state === 'idle') loadOpportunities();
+  } catch(e) {}
+}
+
+// ── Load opportunities ─────────────────────────────────────────────────────────
+
+async function loadOpportunities() {
+  try {
+    const r = await fetch(`${BASE}/api/opportunities`);
+    opportunities = await r.json();
+    renderSidebar();
+    if (!activeKeyword && opportunities.length > 0) {
+      selectKeyword(opportunities[0].keyword);
+    } else if (activeKeyword) {
+      const found = opportunities.find(o => o.keyword === activeKeyword);
+      if (found) renderDetail(found);
+    }
+  } catch(e) {
+    console.error('Failed to load opportunities', e);
+  }
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+
+function renderSidebar() {
+  const el = document.getElementById('opp-list');
+  if (!opportunities.length) {
+    el.innerHTML = `<div class="empty-state" style="min-height:160px;padding:20px 0;">
+      <div style="font-size:13px;color:var(--text-muted);text-align:center;">No data yet.<br>Click "Run Now" to start.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = opportunities.map(o => `
+    <div class="opp-card ${o.keyword === activeKeyword ? 'active' : ''}" onclick="selectKeyword('${o.keyword}')">
+      <div class="opp-card-top">
+        <div class="opp-keyword">${capFirst(o.keyword)}</div>
+        <div class="score-badge" style="color:${scoreColor(o.opportunity_score)}">${o.opportunity_score ?? '—'}</div>
+      </div>
+      <div class="opp-meta">
+        <span class="mini-pill ${scorePillClass(o.demand_score)}">Demand ${o.demand_score ?? '—'}</span>
+        <span class="trend-chip ${trendClass(o.trend)}">${trendSymbol(o.trend)} ${capFirst(o.trend || 'flat')}</span>
+        ${o.avg_price_low ? `<span style="font-size:11px;color:var(--text-muted)">$${o.avg_price_low}–$${o.avg_price_high}</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+// ── Select & render detail ─────────────────────────────────────────────────────
+
+function selectKeyword(kw) {
+  activeKeyword = kw;
+  renderSidebar();
+  const found = opportunities.find(o => o.keyword === kw);
+  if (found) renderDetail(found);
+}
+
+function renderDetail(r) {
+  const mc = document.getElementById('main-content');
+  document.getElementById('empty-placeholder').style.display = 'none';
+
+  const marginClass = r.margin_estimate === 'high' ? 'pill-green' : r.margin_estimate === 'medium' ? 'pill-yellow' : 'pill-red';
+
+  const platformBars = (r.platform_scores || []).map(p => {
+    const max = Math.max(...(r.platform_scores || []).map(x => x.value));
+    return `<div class="bar-row">
+      <div class="bar-label">${p.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(p.value/max)*100}%"></div></div>
+      <div class="bar-num">${p.value}</div>
+    </div>`;
+  }).join('');
+
+  const bullets = arr => (arr || []).map(i => `<li>${i}</li>`).join('');
+  const terms = (r.top_search_terms || []).map(t => `<span class="term-chip">${t}</span>`).join('');
+  const related = (r.related_niches || []).map(n => `
+    <div class="related-chip" onclick="addRelated('${n.replace(/'/g,"\\'")}')" title="Click to search this niche">
+      <span>+</span> ${n}
+    </div>`).join('');
+
+  const sources = (r.sources || []).map(s => `<span class="mini-pill pill-neutral">${s}</span>`).join('');
+
+  mc.innerHTML = `<div class="fade-in">
+    <div class="detail-header">
+      <div>
+        <div class="detail-title">${capFirst(r.keyword)}</div>
+        <div class="detail-trend">
+          <span class="${trendClass(r.trend)}">${trendSymbol(r.trend)}</span>
+          ${r.trend_note || ''}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+          ${sources}
+          ${r.reddit_mentions ? `<span class="mini-pill pill-orange">Reddit ×${r.reddit_mentions}</span>` : ''}
+        </div>
+      </div>
+      <div class="detail-price-block">
+        <div class="price-range">$${r.avg_price_low ?? '?'}–$${r.avg_price_high ?? '?'}</div>
+        <div class="price-meta">
+          ~${r.print_time_hours ?? '?'}h print time &nbsp;·&nbsp;
+          <span class="mini-pill ${marginClass}" style="font-size:11px">${(r.margin_estimate || '').toUpperCase()} margin</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scores -->
+    <div class="score-grid">
+      <div class="score-card">
+        <div class="score-card-label">Opportunity</div>
+        <div>
+          <span class="score-card-value" style="color:${scoreColor(r.opportunity_score)}">${r.opportunity_score ?? '—'}</span>
+          <span class="score-card-denom">/100</span>
+        </div>
+        <div class="score-card-sub">Overall market potential</div>
+      </div>
+      <div class="score-card">
+        <div class="score-card-label">Demand</div>
+        <div>
+          <span class="score-card-value" style="color:${scoreColor(r.demand_score)}">${r.demand_score ?? '—'}</span>
+          <span class="score-card-denom">/100</span>
+        </div>
+        <div class="score-card-sub">Buyer search interest</div>
+      </div>
+      <div class="score-card">
+        <div class="score-card-label">Competition</div>
+        <div>
+          <span class="score-card-value" style="color:${scoreColor(100 - r.competition_score)}">${r.competition_score ?? '—'}</span>
+          <span class="score-card-denom">/100</span>
+        </div>
+        <div class="score-card-sub">Higher = more crowded</div>
+      </div>
+    </div>
+
+    <!-- Live data tiles -->
+    <div class="data-row">
+      <div class="data-tile">
+        <div class="data-tile-source">eBay Sold</div>
+        <div class="data-tile-value">${r.ebay_avg_price ? '$'+r.ebay_avg_price : '—'}</div>
+        <div class="data-tile-sub">Avg sold price</div>
+      </div>
+      <div class="data-tile">
+        <div class="data-tile-source">Etsy</div>
+        <div class="data-tile-value">${r.etsy_listing_count != null ? r.etsy_listing_count.toLocaleString() : '—'}</div>
+        <div class="data-tile-sub">Active listings</div>
+      </div>
+      <div class="data-tile">
+        <div class="data-tile-source">Google Trends</div>
+        <div class="data-tile-value">${r.google_trend_score != null ? r.google_trend_score+'/100' : '—'}</div>
+        <div class="data-tile-sub">90-day interest score</div>
+      </div>
+      <div class="data-tile">
+        <div class="data-tile-source">Reddit</div>
+        <div class="data-tile-value">${r.reddit_mentions ?? 0}</div>
+        <div class="data-tile-sub">Mentions this scan</div>
+      </div>
+    </div>
+
+    <!-- Platform bars -->
+    <div class="platform-card">
+      <div class="section-heading">🏪 Best Platforms to Sell</div>
+      ${platformBars || '<div class="text-muted" style="font-size:13px">No platform data</div>'}
+    </div>
+
+    <!-- Search terms -->
+    <div class="platform-card">
+      <div class="section-heading">🔍 Top Buyer Search Terms</div>
+      <div class="term-grid">${terms || '—'}</div>
+    </div>
+
+    <!-- Why / pitfalls / tips -->
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title"><span class="info-card-icon">💡</span> Why Buyers Purchase</div>
+        <ul class="bullet-list">${bullets(r.why_buy)}</ul>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title"><span class="info-card-icon">⚠️</span> Risks & Pitfalls</div>
+        <ul class="bullet-list">${bullets(r.pitfalls)}</ul>
+      </div>
+      <div class="info-card" style="grid-column:1/-1">
+        <div class="info-card-title"><span class="info-card-icon">🎯</span> Tips to Stand Out</div>
+        <ul class="bullet-list">${bullets(r.tips)}</ul>
+      </div>
+    </div>
+
+    <!-- Related niches -->
+    <div class="platform-card">
+      <div class="section-heading">🔗 Related Niches to Explore</div>
+      <div class="related-grid">${related || '—'}</div>
+    </div>
+
+    <div style="font-size:11px;color:var(--text-light);text-align:right;margin-top:8px">
+      Last updated: ${r.updated_at ? new Date(r.updated_at).toLocaleString() : 'unknown'}
+    </div>
+  </div>`;
+}
+
+// ── Trigger pipeline ───────────────────────────────────────────────────────────
+
+async function triggerPipeline() {
+  document.getElementById('trigger-btn').disabled = true;
+  await fetch(`${BASE}/api/trigger`, { method: 'POST' });
+  setTimeout(pollStatus, 1000);
+}
+
+// ── Add related niche ──────────────────────────────────────────────────────────
+
+function addRelated(niche) {
+  const existing = opportunities.find(o => o.keyword === niche.toLowerCase());
+  if (existing) {
+    selectKeyword(existing.keyword);
+  } else {
+    alert(`"${niche}" will appear in the sidebar after the next pipeline run. Click "Run Now" to fetch it immediately.`);
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+
+pollStatus();
+loadOpportunities();
+statusInterval = setInterval(pollStatus, 5000);
+setInterval(loadOpportunities, 30000);
+</script>
+</body>
+</html>
